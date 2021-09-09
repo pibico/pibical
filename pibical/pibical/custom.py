@@ -56,9 +56,7 @@ def sync_caldav_event_by_user(doc, method=None):
     if fp_user.caldav_url and fp_user.caldav_username and fp_user.caldav_token:
       # Check if selected calendar matches with previously recorded and delete event if not matching
       if doc.caldav_id_url:
-        ocal =  str(doc.caldav_id_url).split("/")
-        ocal_name = ocal[len(ocal)-2]
-        if not ocal_name in doc.caldav_id_calendar:
+        if not doc.caldav_id_calendar.lower().replace(" ","-") in doc.caldav_id_url:
           remove_caldav_event(doc)
           doc.caldav_id_url = None
           doc.event_uid = None
@@ -238,5 +236,5 @@ def remove_caldav_event(doc, method=None):
                   break
               if doExists:
                 url_event.delete()
-                frappe.msgprint(_("Deleted Event in CalDav Calendar") + str(c.name))
+                frappe.msgprint(_("Deleted Event in CalDav Calendar ") + str(c.name))
                 break
