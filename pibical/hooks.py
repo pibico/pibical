@@ -80,7 +80,7 @@ app_license = "MIT"
 # Hook on document methods and events
 
 doc_events = {
- 	"Event": {
+  "Event": {
     "before_save": "pibical.pibical.custom.sync_caldav_event_by_user",
     "on_trash": "pibical.pibical.custom.remove_caldav_event"
   }
