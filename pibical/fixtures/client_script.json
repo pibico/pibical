@@ -1,0 +1,15 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Event",
+  "enabled": 1,
+  "modified": "2021-09-09 13:44:53.417228",
+  "name": "Event-Form",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "frappe.ui.form.on('Event', {\n sync_with_caldav (frm) {\n\tif (frm.doc.sync_with_caldav) {\n\t  if (frappe.session.user != 'Administrator') {\n\t    frappe.call({\n          method: \"pibical.pibical.custom.get_calendar\",\n          args: {\n            nuser: frappe.session.user,\n          },\n          callback(r) {\n            var data = r.message;\n            var options = [];\n            if (data.length > 0) {\n              for (var i = 0; i < data.length; i++) {\n                options.push({\n                  'label': data[i].name,\n                  'value': data[i].url\n                });\n\t\t      }\n            }     \n            frm.set_df_property(\"caldav_id_calendar\", \"options\", options);\n            frm.refresh_field(\"caldav_id_calendar\");\n          }\n        });\n\t  }    \n\t}\n  }\n});",
+  "view": "Form"
+ }
+]
