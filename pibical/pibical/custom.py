@@ -54,6 +54,14 @@ def sync_caldav_event_by_user(doc, method=None):
     fp_user = frappe.get_doc("User", frappe.session.user)
     # Continue if CalDav Data exists on logged in user
     if fp_user.caldav_url and fp_user.caldav_username and fp_user.caldav_token:
+      # Check if selected calendar matches with previously recorded and delete event if not matching
+      if doc.caldav_id_url:
+        ocal =  str(doc.caldav_id_url).split("/")
+        ocal_name = ocal[len(ocal)-2]
+        if not ocal_name in doc.caldav_id_calendar:
+          remove_caldav_event(doc)
+          doc.caldav_id_url = None
+          doc.event_uid = None
       # Fill CalDav URL with selected CalDav Calendar
       doc.caldav_id_url = doc.caldav_id_calendar
       # Create uid for new events
@@ -127,12 +135,15 @@ def sync_caldav_event_by_user(doc, method=None):
             if doc.event_participants:
               if len(doc.event_participants) > 0:
                 for _contact in doc.event_participants:
-                  if _contact.reference_doctype == "Contact":
+                  if _contact.reference_doctype in ["Contact", "Customer", "Lead", "Supplier"]:
                     email = frappe.db.get_value("Contact", _contact.reference_docname, "email_id")
                     contact = vCalAddress(u'mailto:%s' % email)
                     contact.params['cn'] = vText(_contact.reference_docname)
-                  if _contact.reference_doctype == "User":
+                  elif _contact.reference_doctype == "User":
                     contact = vCalAddress(u'mailto:%s' % _contact.reference_docname)
+                    contact.params['cn'] = vText(_contact.reference_docname)
+                  else:
+                    contact = vCalAddress(u'mailto:%s' % "")
                     contact.params['cn'] = vText(_contact.reference_docname)
                   if _contact.participant_type:
                     if _contact.participant_type == "Chairperson":
