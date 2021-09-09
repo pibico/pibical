@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include pibical *.css
+recursive-include pibical *.csv
+recursive-include pibical *.html
+recursive-include pibical *.ico
+recursive-include pibical *.js
+recursive-include pibical *.json
+recursive-include pibical *.md
+recursive-include pibical *.png
+recursive-include pibical *.py
+recursive-include pibical *.svg
+recursive-include pibical *.txt
+recursive-exclude pibical *.pyc
