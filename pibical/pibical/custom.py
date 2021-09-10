@@ -56,7 +56,12 @@ def sync_caldav_event_by_user(doc, method=None):
     if fp_user.caldav_url and fp_user.caldav_username and fp_user.caldav_token:
       # Check if selected calendar matches with previously recorded and delete event if not matching
       if doc.caldav_id_url:
-        if not doc.caldav_id_calendar.lower().replace(" ","-") in doc.caldav_id_url:
+        s_cal = doc.caldav_id_url.split("/")
+        ocal = s_cal[len(s_cal)-2]
+        if '_shared_by_' in ocal:
+          pos = ocal.find("_shared_by_")
+          ocal = ocal[0:pos]
+        if not ocal in doc.caldav_id_calendar:
           remove_caldav_event(doc)
           doc.caldav_id_url = None
           doc.event_uid = None
