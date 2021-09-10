@@ -112,12 +112,12 @@ def sync_caldav_event_by_user(doc, method=None):
             # DTSTAMP from current time
             event.add('dtstamp', datetime.datetime.now())
             # DTSTART from start
-            dtstart = datetime.datetime.strptime(doc.starts_on, '%Y-%m-%d %H:%M:%S')
+            dtstart = datetime.datetime.strptime(doc.starts_on, '%Y-%m-%d %H:%M:%S.%f')
             dtstart = datetime.datetime(dtstart.year, dtstart.month, dtstart.day, dtstart.hour, dtstart.minute, dtstart.second, tzinfo=madrid)
             event.add('dtstart', dtstart)
             # DTEND if end
             if doc.ends_on:
-              dtend = datetime.datetime.strptime(doc.ends_on, '%Y-%m-%d %H:%M:%S')
+              dtend = datetime.datetime.strptime(doc.ends_on, '%Y-%m-%d %H:%M:%S.%f')
               dtend = datetime.datetime(dtend.year, dtend.month, dtend.day, dtend.hour, dtend.minute, dtend.second, tzinfo=madrid)
               event.add('dtend', dtend)
             # DESCRIPTION if any

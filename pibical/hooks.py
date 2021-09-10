@@ -131,4 +131,4 @@ doc_events = {
 # 	"Task": "pibical.task.get_dashboard_data"
 # }
 
-fixtures = ["Custom Field","Custom Script"]
+fixtures = ["Custom Field","Custom Script","Translation"]
