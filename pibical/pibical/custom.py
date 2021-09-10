@@ -12,7 +12,6 @@ import sys, requests, hashlib
 from icalendar import Calendar, Event
 from icalendar import vCalAddress, vText, vRecur
 from pytz import UTC, timezone
-from dateutil.rrule import *
 
 import caldav
 from frappe.utils.password import get_decrypted_password
