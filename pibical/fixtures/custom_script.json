@@ -3,11 +3,11 @@
   "docstatus": 0,
   "doctype": "Custom Script",
   "dt": "Event",
-  "modified": "2021-09-09 18:05:50.726559",
+  "modified": "2021-09-10 19:00:10.484676",
   "name": "Event-Client",
   "parent": null,
   "parentfield": null,
   "parenttype": null,
-  "script": "frappe.ui.form.on('Event', {\n onload(frm) {\n   if (frm.doc.sync_with_caldav) {\n\t  sync_caldav(frm);    \n\t}\n },\n refresh(frm) {\n   if (frm.doc.sync_with_caldav) {\n\t  sync_caldav(frm);    \n\t}\n },\n sync_with_caldav(frm) {\n   if (frm.doc.sync_with_caldav) {\n\t  sync_caldav(frm);    \n\t}\n }\n});\nfunction sync_caldav(frm) {\n  if (frappe.session.user != 'Administrator') {\n    frappe.call({\n      method: \"pibical.pibical.custom.get_calendar\",\n      args: {\n        nuser: frappe.session.user,\n      },\n      callback(r) {\n        var data = r.message;\n        var options = [];\n        if (data.length > 0) {\n          for (var i = 0; i < data.length; i++) {\n            options.push({\n              'label': data[i].name,\n              'value': data[i].url\n            });\n\t      }\n        }     \n        frm.set_df_property(\"caldav_id_calendar\", \"options\", options);\n        frm.refresh_field(\"caldav_id_calendar\");\n      }\n    });\n  }      \n}"
+  "script": "frappe.ui.form.on('Event', {\n onload(frm) {\n   if (frm.doc.sync_with_caldav) {\n\t  sync_caldav(frm);    \n\t}\n },\n refresh(frm) {\n   if (frm.doc.sync_with_caldav) {\n\t  sync_caldav(frm);    \n\t}\n },\n sync_with_caldav(frm) {\n   if (frm.doc.sync_with_caldav) {\n\t  sync_caldav(frm);    \n\t}\n },\n validate(frm) {\n   if (frm.doc.sync_with_caldav) {\n     if (frm.doc.caldav_id_calendar === undefined) {\n       msgprint(__(\"Please Select a CalDav Calendar\"));\n       frappe.validated = false;\n     }       \n   }     \n }\n});\nfunction sync_caldav(frm) {\n  if (frappe.session.user != 'Administrator') {\n    frappe.call({\n      method: \"pibical.pibical.custom.get_calendar\",\n      args: {\n        nuser: frappe.session.user,\n      },\n      callback(r) {\n        var data = r.message;\n        var options = [];\n        if (data.length > 0) {\n          for (var i = 0; i < data.length; i++) {\n            options.push({\n              'label': data[i].name,\n              'value': data[i].url\n            });\n\t      }\n        }     \n        frm.set_df_property(\"caldav_id_calendar\", \"options\", options);\n        frm.refresh_field(\"caldav_id_calendar\");\n      }\n    });\n  }      \n}"
  }
 ]

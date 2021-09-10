@@ -138,5 +138,33 @@
   "source_name": "Modules",
   "status": "Saved",
   "target_name": "M\u00f3dulos"
+ },
+ {
+  "contributed_translation_doctype_name": null,
+  "docstatus": 0,
+  "doctype": "Translation",
+  "language": "es",
+  "modified": "2021-09-10 17:25:15.714974",
+  "name": "1c39002199",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "source_name": "Not Named",
+  "status": "Saved",
+  "target_name": "Sin Nombre"
+ },
+ {
+  "contributed_translation_doctype_name": null,
+  "docstatus": 0,
+  "doctype": "Translation",
+  "language": "es",
+  "modified": "2021-09-10 19:00:33.993378",
+  "name": "a0f3ba21fb",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "source_name": "Please Select a CalDav Calendar",
+  "status": "Saved",
+  "target_name": "Por favor Elige un Calendario CalDav"
  }
 ]

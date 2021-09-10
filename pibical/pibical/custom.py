@@ -5,7 +5,8 @@
 from __future__ import unicode_literals
 import frappe
 from frappe import msgprint, _
-import datetime, json
+import json
+from datetime import datetime, timedelta
 
 import sys, requests, hashlib
 from icalendar import Calendar, Event
@@ -61,14 +62,17 @@ def sync_caldav_event_by_user(doc, method=None):
         if '_shared_by_' in ocal:
           pos = ocal.find("_shared_by_")
           ocal = ocal[0:pos]
-        if not ocal in doc.caldav_id_calendar:
-          remove_caldav_event(doc)
-          doc.caldav_id_url = None
-          doc.event_uid = None
+        if not doc.caldav_id_calendar is None:
+          if not ocal in doc.caldav_id_calendar:
+            remove_caldav_event(doc)
+            doc.caldav_id_url = None
+            doc.event_uid = None
+            doc.event_stamp = None
       # Fill CalDav URL with selected CalDav Calendar
       doc.caldav_id_url = doc.caldav_id_calendar
+        
       # Create uid for new events
-      str_uid = datetime.datetime.now().strftime("%Y%m%dT%H%M%S")
+      str_uid = datetime.now().strftime("%Y%m%dT%H%M%S")
       uidstamp = 'frappe' + hashlib.md5(str_uid.encode('utf-8')).hexdigest() + '@pibico.es'
       if not doc.event_uid:
         doc.event_uid = uidstamp
@@ -110,15 +114,16 @@ def sync_caldav_event_by_user(doc, method=None):
             # SUMMARY from Subject
             event.add('summary', doc.subject)
             # DTSTAMP from current time
-            event.add('dtstamp', datetime.datetime.now())
+            doc.event_stamp = datetime.now()
+            event.add('dtstamp', doc.event_stamp)
             # DTSTART from start
-            dtstart = datetime.datetime.strptime(doc.starts_on, '%Y-%m-%d %H:%M:%S.%f')
-            dtstart = datetime.datetime(dtstart.year, dtstart.month, dtstart.day, dtstart.hour, dtstart.minute, dtstart.second, tzinfo=madrid)
+            dtstart = datetime.strptime(doc.starts_on, '%Y-%m-%d %H:%M:%S')
+            dtstart = datetime(dtstart.year, dtstart.month, dtstart.day, dtstart.hour, dtstart.minute, dtstart.second, tzinfo=madrid)
             event.add('dtstart', dtstart)
             # DTEND if end
             if doc.ends_on:
-              dtend = datetime.datetime.strptime(doc.ends_on, '%Y-%m-%d %H:%M:%S.%f')
-              dtend = datetime.datetime(dtend.year, dtend.month, dtend.day, dtend.hour, dtend.minute, dtend.second, tzinfo=madrid)
+              dtend = datetime.strptime(doc.ends_on, '%Y-%m-%d %H:%M:%S')
+              dtend = datetime(dtend.year, dtend.month, dtend.day, dtend.hour, dtend.minute, dtend.second, tzinfo=madrid)
               event.add('dtend', dtend)
             # DESCRIPTION if any
             if doc.description:
@@ -167,8 +172,8 @@ def sync_caldav_event_by_user(doc, method=None):
                if not doc.repeat_till:
                  event.add('rrule', {'freq': [doc.repeat_on.lower()]})
                else:
-                 dtuntil = datetime.datetime.strptime(doc.repeat_till, '%Y-%m-%d')
-                 dtuntil = datetime.datetime(dtuntil.year, dtuntil.month, dtuntil.day, tzinfo=madrid)
+                 dtuntil = datetime.strptime(doc.repeat_till, '%Y-%m-%d')
+                 dtuntil = datetime(dtuntil.year, dtuntil.month, dtuntil.day, tzinfo=madrid)
                  event.add('rrule', {'freq': [doc.repeat_on.lower()], 'until': [dtuntil]})
             # Add event to iCalendar 
             cal.add_component(event)
@@ -193,6 +198,7 @@ def sync_caldav_event_by_user(doc, method=None):
       
       doc.caldav_id_url = None
       doc.event_uid = None
+      doc.event_stamp = None
 
 @frappe.whitelist()
 def remove_caldav_event(doc, method=None):
@@ -243,3 +249,133 @@ def remove_caldav_event(doc, method=None):
                 url_event.delete()
                 frappe.msgprint(_("Deleted Event in CalDav Calendar ") + str(c.name))
                 break
+
+def sync_outside_caldav():
+  # Get All Users with CalDav Credentials
+  caldav_users = frappe.get_list(
+    doctype = "User",
+    fields = ["name", "caldav_url", "caldav_username"],
+    filters = [['enabled', '=', 1],['name', '!=', 'Administrator'], ['name', '!=', 'Guest'], ['caldav_username', '!=', '']]
+  )
+  if caldav_users:
+    if len(caldav_users) > 0:
+      # Array for include processed uuid events
+      sel_uuid = []
+      for caldav_user in caldav_users:
+        # Get CalDav URL, CalDav User and Token
+        if caldav_user.caldav_url[-1] == "/":
+          caldav_url = caldav_user.caldav_url + "users/" + caldav_user.caldav_username
+        else:
+          caldav_url = caldav_user.caldav_url + "/users/" + caldav_user.caldav_username
+        caldav_username = caldav_user.caldav_username
+        caldav_token = get_decrypted_password('User', caldav_user.name, 'caldav_token', False)
+        # Set connection to caldav calendar with CalDav user credentials
+        caldav_client = caldav.DAVClient(url=caldav_url, username=caldav_username, password=caldav_token)
+        cal_principal = caldav_client.principal()
+        # Fetching calendars from server
+        calendars = cal_principal.calendars()
+        if calendars:
+          # Loop on CalDav User Calendars to check events scheduled from yesterday to 30 days onwards
+          for c in calendars:
+            sel_events = c.date_search(datetime.now().date()-timedelta(days=1), datetime.now().date()+timedelta(days=+30))
+            # Loop through selected events by scheduled dates
+            for url_event in sel_events:
+              cal_url = str(url_event).replace("Event: https://", "https://" + caldav_username + ":" + caldav_token +"@")
+              req = requests.get(cal_url)
+              cal = Calendar.from_ical(req.text)
+              # Sync CalDav calendar from OutSide Server
+              for evento in cal.walk('vevent'):
+                # Check if already processed uuid event
+                if not evento.decoded('uid') in sel_uuid:
+                  # Add uuid event to processed events array
+                  sel_uuid.append(evento.decoded('uid'))
+                  # Processing event if dtstamp has changed or not in frappe events
+                  fp_event = frappe.get_list(
+                    doctype = 'Event',
+                    fields = ['*'],
+                    filters = [['docstatus', '<', 2], ['event_uid', '=', evento.decoded('uid').decode("utf-8")]]
+                  )
+                  if fp_event:
+                    # Check if dtstamp has changed meaning it has been updated on NextCloud   
+                    if fp_event[0].event_stamp.strftime("%Y-%m-%d %H:%M:%S") != evento.decoded('dtstamp').strftime("%Y-%m-%d %H:%M:%S"):
+                      cal_event = frappe.get_doc("Event", fp_event[0].name)
+                      # caldav_id_url
+                      cal_event.caldav_id_url = str(c.url)
+                      upd_event = prepare_fp_event(cal_event, evento)  
+                      upd_event.save()
+                      #print(upd_event.as_dict())
+                  else:
+                    #Create new event in Frappe
+                    new_cal_event = frappe.new_doc("Event")
+                    new_cal_event.caldav_id_url = str(c.url)
+                    new_event = prepare_fp_event(new_cal_event, evento)
+                    new_event.save()
+                    frappe.db.commit()
+                    #print(new_event.as_dict())
+                    #print("New Event ", evento.decoded('uid'), evento.decoded('summary'), evento.decoded('dtstart'), evento.decoded('dtstamp'))
+                    
+def prepare_fp_event(event, cal_event):
+  # Prepare event for Frappe
+  """
+  VEVENT(
+   {
+    'SUMMARY': vText('b'Modificacion en NC''),
+    'DTSTART': <icalendar.prop.vDDDTypes object at 0xb5ac7210>,
+    'DTSTAMP': <icalendar.prop.vDDDTypes object at 0xb34d7910>,
+    'UID': vText('b'frappe2e1b86d90aefb1d0ff340b382acfa756@pibico.es''),
+    'DESCRIPTION': vText('b'<div>Para ir completando programa\\, y modificando eventos\\, esta vez por PibiCo</div>''),
+    'LOCATION': vText('b'Ubicacion''),
+    'CATEGORIES': <icalendar.prop.vCategory object at 0xb34d7470>,
+    'ATTENDEE': vCalAddress('b'mailto:francisco.alaez@pibico.es''),
+    'ORGANIZER': vCalAddress('b'mailto:pibidesk@gmail.com''),
+    'RRULE': vRecur(
+           {
+		    'FREQ': ['YEARLY'],
+		    'BYMONTH': [9],
+		    'UNTIL': [datetime.datetime(2021, 9, 15, 6, 48, tzinfo=<UTC>)]
+		   }
+          ),
+   'SEQUENCE': 2,
+   'LAST-MODIFIED': <icalendar.prop.vDDDTypes object at 0xb3411110>
+   },
+   VALARM(
+    {
+    'ACTION': vText('b'DISPLAY''),
+    'TRIGGER': <icalendar.prop.vDDDTypes object at 0xb3411130>
+    }
+   )
+  )
+  """
+  # event_type.  ALWAYS PUBLIC
+  event.event_type = "Public"
+  # sync_with_caldav. ALWAYS TRUE
+  event.sync_with_caldav = 1
+  # subject
+  if not 'summary' in cal_event:
+    event.subject = (_("Untitled event"))
+  else:
+    event.subject = cal_event.decoded('summary').decode("utf-8")
+  # starts_on
+  event.starts_on = cal_event.decoded('dtstart').astimezone().strftime("%Y-%m-%d %H:%M:%S")
+  # ends_on
+  if 'dtend' in cal_event:
+    event.ends_on = cal_event.decoded('dtend').astimezone().strftime("%Y-%m-%d %H:%M:%S")
+  # event_dtstamp
+  event.event_stamp = cal_event.decoded('dtstamp').astimezone().strftime("%Y-%m-%d %H:%M:%S")
+  # event_uid
+  event.event_uid = cal_event.decoded('uid').decode("utf-8")
+  # description
+  if 'description' in cal_event:
+    event.description = cal_event.decoded('description').decode("utf-8")
+  # location
+  if 'location' in cal_event:
+    event.location = cal_event.decoded('location').decode("utf-8")
+  # event_category
+  if not event.event_category:
+    event.event_category = "Other"
+  # event_participants child_table
+  # For future development  
+  if 'rrule' in cal_event:
+    event.repeat_this_event = 1
+  
+  return event
