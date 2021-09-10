@@ -81,7 +81,7 @@ app_license = "MIT"
 
 doc_events = {
   "Event": {
-    "after_save": "pibical.pibical.custom.sync_caldav_event_by_user",
+    "before_save": "pibical.pibical.custom.sync_caldav_event_by_user",
     "on_trash": "pibical.pibical.custom.remove_caldav_event"
   }
    #"*": {
