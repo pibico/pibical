@@ -62,15 +62,13 @@ def sync_caldav_event_by_user(doc, method=None):
         if '_shared_by_' in ocal:
           pos = ocal.find("_shared_by_")
           ocal = ocal[0:pos]
-        if not doc.caldav_id_calendar is None:
-          if not ocal in doc.caldav_id_calendar:
-            remove_caldav_event(doc)
-            doc.caldav_id_url = None
-            doc.event_uid = None
-            doc.event_stamp = None
+        if not ocal in doc.caldav_id_calendar or not 'frappe' in doc.event_uid:
+          remove_caldav_event(doc)
+          doc.caldav_id_url = None
+          doc.event_uid = None
+          doc.event_stamp = None
       # Fill CalDav URL with selected CalDav Calendar
       doc.caldav_id_url = doc.caldav_id_calendar
-        
       # Create uid for new events
       str_uid = datetime.now().strftime("%Y%m%dT%H%M%S")
       uidstamp = 'frappe' + hashlib.md5(str_uid.encode('utf-8')).hexdigest() + '@pibico.es'
@@ -312,7 +310,6 @@ def sync_outside_caldav():
                     new_event.save()
                     frappe.db.commit()
                     #print(new_event.as_dict())
-                    #print("New Event ", evento.decoded('uid'), evento.decoded('summary'), evento.decoded('dtstart'), evento.decoded('dtstamp'))
                     
 def prepare_fp_event(event, cal_event):
   # Prepare event for Frappe
