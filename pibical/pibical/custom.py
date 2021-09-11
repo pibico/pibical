@@ -239,7 +239,7 @@ def remove_caldav_event(doc, method=None):
               req = requests.get(cal_url)
               cal = Calendar.from_ical(req.text)
               for evento in cal.walk('vevent'):
-                if uidstamp in str(evento.decoded('uid')):
+                if uidstamp in str(evento.decoded('uid').decode('utf-8').lower()):
                   doExists = True
                   break
               if doExists:
