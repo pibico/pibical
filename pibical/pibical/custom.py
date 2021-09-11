@@ -285,12 +285,12 @@ def sync_outside_caldav():
                 # Check if already processed uuid event
                 if not evento.decoded('uid') in sel_uuid:
                   # Add uuid event to processed events array
-                  sel_uuid.append(evento.decoded('uid'))
+                  sel_uuid.append(evento.decoded('uid').decode("utf-8").lower())
                   # Processing event if dtstamp has changed or not in frappe events
                   fp_event = frappe.get_list(
                     doctype = 'Event',
                     fields = ['*'],
-                    filters = [['docstatus', '<', 2], ['event_uid', '=', evento.decoded('uid').decode("utf-8")]]
+                    filters = [['docstatus', '<', 2], ['event_uid', '=', evento.decoded('uid').decode("utf-8").lower()]]
                   )
                   if fp_event:
                     # Check if dtstamp has changed meaning it has been updated on NextCloud   
@@ -359,7 +359,7 @@ def prepare_fp_event(event, cal_event):
   # event_dtstamp
   event.event_stamp = cal_event.decoded('dtstamp').astimezone().strftime("%Y-%m-%d %H:%M:%S")
   # event_uid
-  event.event_uid = cal_event.decoded('uid').decode("utf-8")
+  event.event_uid = cal_event.decoded('uid').decode("utf-8").lower()
   # description
   if 'description' in cal_event:
     event.description = cal_event.decoded('description').decode("utf-8")

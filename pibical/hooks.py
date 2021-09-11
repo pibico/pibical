@@ -96,7 +96,7 @@ doc_events = {
 
 scheduler_events = {
  	"cron": {
-    "*/1 * * * *": [
+    "*/5 * * * *": [
  		  "pibical.pibical.custom.sync_outside_caldav"
  	  ]
   }
