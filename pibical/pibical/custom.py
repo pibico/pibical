@@ -132,7 +132,7 @@ def sync_caldav_event_by_user(doc, method=None):
             category = _(doc.event_category)
             event.add('categories', [category])
             # ORGANIZER from user session
-            if not fp_user in ["Administrator","Guest"]:
+            if not fp_user in ["Administrator", "Guest"]:
               organizer = vCalAddress(u'mailto:%s' % fp_user)
               organizer.params['cn'] = vText(fp_user.caldav_username)
               organizer.params['ROLE'] = vText('ORGANIZER')
@@ -144,7 +144,7 @@ def sync_caldav_event_by_user(doc, method=None):
                   if _contact.reference_doctype in ["Contact", "Customer", "Lead", "Supplier"]:
                     if not _contact.reference_docname in ["Administrator", "Guest"]:
                       email = frappe.db.get_value("Contact", _contact.reference_docname, "email_id")
-                      if "@" in email:
+                      if "@" in email and not 'Administrator' in email:
                         contact = vCalAddress(u'mailto:%s' % email)
                         contact.params['cn'] = vText(_contact.reference_docname)
                   elif _contact.reference_doctype == "User":
