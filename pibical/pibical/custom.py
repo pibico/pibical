@@ -132,10 +132,11 @@ def sync_caldav_event_by_user(doc, method=None):
             category = _(doc.event_category)
             event.add('categories', [category])
             # ORGANIZER from user session
-            organizer = vCalAddress(u'mailto:%s' % fp_user)
-            organizer.params['cn'] = vText(fp_user.caldav_username)
-            organizer.params['ROLE'] = vText('ORGANIZER')
-            event.add('organizer', organizer)
+            if not fp_user in ["Administrator", "Guest"] 
+              organizer = vCalAddress(u'mailto:%s' % fp_user)
+              organizer.params['cn'] = vText(fp_user.caldav_username)
+              organizer.params['ROLE'] = vText('ORGANIZER')
+              event.add('organizer', organizer)
             # ATTENDEE if participants
             if doc.event_participants:
               if len(doc.event_participants) > 0:
@@ -145,8 +146,9 @@ def sync_caldav_event_by_user(doc, method=None):
                     contact = vCalAddress(u'mailto:%s' % email)
                     contact.params['cn'] = vText(_contact.reference_docname)
                   elif _contact.reference_doctype == "User":
-                    contact = vCalAddress(u'mailto:%s' % _contact.reference_docname)
-                    contact.params['cn'] = vText(_contact.reference_docname)
+                    if not _contact.reference_docname in ["Administrator", "Guest"]
+                      contact = vCalAddress(u'mailto:%s' % _contact.reference_docname)
+                      contact.params['cn'] = vText(_contact.reference_docname)
                   else:
                     contact = vCalAddress(u'mailto:%s' % "")
                     contact.params['cn'] = vText(_contact.reference_docname)
