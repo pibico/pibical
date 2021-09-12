@@ -106,7 +106,7 @@ def sync_caldav_event_by_user(doc, method=None):
             # Initialize Event
             event = Event()
             # Fill data to Event
-            # UID  
+            # UID
             event['uid'] = uidstamp
             # SUMMARY from Subject
             event.add('summary', doc.subject)
@@ -132,29 +132,33 @@ def sync_caldav_event_by_user(doc, method=None):
             category = _(doc.event_category)
             event.add('categories', [category])
             # ORGANIZER from user session
-            organizer = vCalAddress(u'mailto:%s' % fp_user)
-            organizer.params['cn'] = vText(fp_user.caldav_username)
-            organizer.params['ROLE'] = vText('ORGANIZER')
-            event.add('organizer', organizer)
+            if not fp_user in ["Administrator","Guest"]:
+              organizer = vCalAddress(u'mailto:%s' % fp_user)
+              organizer.params['cn'] = vText(fp_user.caldav_username)
+              organizer.params['ROLE'] = vText('ORGANIZER')
+              event.add('organizer', organizer)
             # ATTENDEE if participants
             if doc.event_participants:
               if len(doc.event_participants) > 0:
                 for _contact in doc.event_participants:
                   if _contact.reference_doctype in ["Contact", "Customer", "Lead", "Supplier"]:
-                    email = frappe.db.get_value("Contact", _contact.reference_docname, "email_id")
-                    contact = vCalAddress(u'mailto:%s' % email)
-                    contact.params['cn'] = vText(_contact.reference_docname)
+                    if not _contact.reference_docname in ["Administrator", "Guest"]:
+                      email = frappe.db.get_value("Contact", _contact.reference_docname, "email_id")
+                      if "@" in email:
+                        contact = vCalAddress(u'mailto:%s' % email)
+                        contact.params['cn'] = vText(_contact.reference_docname)
                   elif _contact.reference_doctype == "User":
-                    contact = vCalAddress(u'mailto:%s' % _contact.reference_docname)
-                    contact.params['cn'] = vText(_contact.reference_docname)
+                    if not _contact.reference_docname in ["Administrator", "Guest"]:
+                      contact = vCalAddress(u'mailto:%s' % _contact.reference_docname)
+                      contact.params['cn'] = vText(_contact.reference_docname)
                   else:
                     contact = vCalAddress(u'mailto:%s' % "")
                     contact.params['cn'] = vText(_contact.reference_docname)
                   if _contact.participant_type:
                     if _contact.participant_type == "Chairperson":
-                      contact.params['ROLE'] = vText('CHAIR') 
+                      contact.params['ROLE'] = vText('CHAIR')
                     elif _contact.participant_type == "Required":
-                      contact.params['ROLE'] = vText('REQ-PARTICIPANT') 
+                      contact.params['ROLE'] = vText('REQ-PARTICIPANT')
                     elif _contact.participant_type == "Optional":
                       contact.params['ROLE'] = vText('OPT-PARTICIPANT')
                     elif _contact.participant_type == "Non Participant":
