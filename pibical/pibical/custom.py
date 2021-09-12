@@ -145,10 +145,14 @@ def sync_caldav_event_by_user(doc, method=None):
                     email = frappe.db.get_value("Contact", _contact.reference_docname, "email_id")
                     contact = vCalAddress(u'mailto:%s' % email)
                     contact.params['cn'] = vText(_contact.reference_docname)
+                    contact.params['partstat'] = vText('NEEDS-ACTION')
+                    contact.params['rsvp'] = vText(str(bool(_contact.send_email)).upper())  
                   elif _contact.reference_doctype == "User":
                     if not _contact.reference_docname in ["Administrator", "Guest"]:
                       contact = vCalAddress(u'mailto:%s' % _contact.reference_docname)
                       contact.params['cn'] = vText(_contact.reference_docname)
+                      contact.params['partstat'] = vText('NEEDS-ACTION')
+                      contact.params['rsvp'] = vText(str(bool(_contact.send_email)).upper())
                   else:
                     contact = vCalAddress(u'mailto:%s' % "")
                     contact.params['cn'] = vText(_contact.reference_docname)
