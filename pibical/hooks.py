@@ -94,6 +94,15 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
+scheduler_events = {
+  "cron": {
+    "*/3 * * * *": [
+      "pibical.pibical.custom.sync_outside_caldav"
+    ]
+  }
+}
+
+
 # scheduler_events = {
 # 	"all": [
 # 		"pibical.tasks.all"

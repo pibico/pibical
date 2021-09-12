@@ -24,7 +24,7 @@ def get_data():
           "name": "SMS Settings",
           "description": _("SMS Settings"),
           "onboard": 1,
-        }          
+        }
       ]
     }
   ]
