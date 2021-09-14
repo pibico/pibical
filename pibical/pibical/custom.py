@@ -400,8 +400,8 @@ def prepare_fp_event(event, cal_event):
             'reference_docname': contact_name
           })
   # For future development  
-  #if 'rrule' in cal_event:
-  #  event.repeat_this_event = 1
+  if 'rrule' in cal_event:
+    event.repeat_this_event = 1
          
   #print(event.as_dict())
   return event
