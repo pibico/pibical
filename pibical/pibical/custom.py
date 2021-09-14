@@ -198,7 +198,7 @@ def sync_caldav_event_by_user(doc, method=None):
   else:
     if doc.event_uid:
       remove_caldav_event(doc)
-      
+
       doc.caldav_id_url = None
       doc.event_uid = None
       doc.event_stamp = None
@@ -289,7 +289,7 @@ def sync_outside_caldav():
               # Sync CalDav calendar from OutSide Server
               for evento in cal.walk('vevent'):
                 # Check if already processed uuid event
-                if not evento.decoded('uid') in sel_uuid:
+                if not evento.decoded('uid').decode("utf-8").lower() in sel_uuid:
                   # Add uuid event to processed events array
                   sel_uuid.append(evento.decoded('uid').decode("utf-8").lower())
                   # Processing event if dtstamp has changed or not in frappe events
@@ -315,7 +315,7 @@ def sync_outside_caldav():
                     new_event.save()
                     frappe.db.commit()
                     #print(new_event.as_dict())
-                    
+
 def prepare_fp_event(event, cal_event):
   # Prepare event for Frappe
   """
@@ -376,8 +376,26 @@ def prepare_fp_event(event, cal_event):
   if not event.event_category:
     event.event_category = "Other"
   # event_participants child_table
-  # For future development  
+  if 'attendee' in cal_event:
+    for attendee in cal_event.get('attendee', []):
+      contact = attendee.replace("mailto:", "")
+      contact_name = frappe.db.get_value("Contact", {"email_id": contact})
+      if contact_name:
+        isInvited = True
+        if 'event_participants' in event.as_dict():
+          for row in event.event_participants:
+            if contact_name in row:
+              isInvited = False
+        if isInvited:
+          event.append('event_participants', {
+            'reference_doctype': 'Contact', 
+            'reference_docname': contact_name
+          })
+  # For future development
   if 'rrule' in cal_event:
     event.repeat_this_event = 1
-  
+  #if 'attendee' in cal_event:
+
+
+
   return event
