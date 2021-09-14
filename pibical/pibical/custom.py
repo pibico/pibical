@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2020, PibiCo and contributors
 # For license information, please see license.txt
-
 from __future__ import unicode_literals
 import frappe
 from frappe import msgprint, _
@@ -395,7 +394,7 @@ def prepare_fp_event(event, cal_event):
         isInvited = True
         if 'event_participants' in event.as_dict():
           for row in event.event_participants:
-            if contact_name in row:
+            if contact_name == row.reference_docname or contact == row.reference_docname:
               isInvited = False
         if isInvited:
           if 'ROLE' in attendee.params:
