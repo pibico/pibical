@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2020, PibiCo and contributors
 # For license information, please see license.txt
-
 from __future__ import unicode_literals
 import frappe
 from frappe import msgprint, _
@@ -106,7 +105,7 @@ def sync_caldav_event_by_user(doc, method=None):
             # Initialize Event
             event = Event()
             # Fill data to Event
-            # UID
+            # UID  
             event['uid'] = uidstamp
             # SUMMARY from Subject
             event.add('summary', doc.subject)
@@ -138,29 +137,37 @@ def sync_caldav_event_by_user(doc, method=None):
               organizer.params['ROLE'] = vText('ORGANIZER')
               event.add('organizer', organizer)
             # ATTENDEE if participants
+            """
+            attendee_params = { "CUTYPE"   => "INDIVIDUAL",
+                    "ROLE"     => "REQ-PARTICIPANT",
+                    "PARTSTAT" => "NEEDS-ACTION",
+                    "RSVP"     => "TRUE",
+                    "CN"       => "Firstname Lastname",
+                    "X-NUM-GUESTS" => "0" }
+            """        
             if doc.event_participants:
               if len(doc.event_participants) > 0:
                 for _contact in doc.event_participants:
                   if _contact.reference_doctype in ["Contact", "Customer", "Lead", "Supplier"]:
-                    if not _contact.reference_docname in ["Administrator", "Guest"]:
-                      email = frappe.db.get_value("Contact", _contact.reference_docname, "email_id")
-                      if "@" in email and not 'Administrator' in email:
-                        contact = vCalAddress(u'mailto:%s' % email)
-                        contact.params['cn'] = vText(_contact.reference_docname)
-                        contact.params['partstat'] = vText('NEEDS-ACTION')
-                        contact.params['rsvp'] = vText(str(bool(_contact.send_email)).upper())
+                    email = frappe.db.get_value("Contact", _contact.reference_docname, "email_id")
+                    contact = vCalAddress(u'mailto:%s' % email)
+                    contact.params['cn'] = vText(_contact.reference_docname)
+                    contact.params['partstat'] = vText('NEEDS-ACTION')
+                    contact.params['rsvp'] = vText(str(bool(_contact.send_email)).upper())  
                   elif _contact.reference_doctype == "User":
                     if not _contact.reference_docname in ["Administrator", "Guest"]:
                       contact = vCalAddress(u'mailto:%s' % _contact.reference_docname)
                       contact.params['cn'] = vText(_contact.reference_docname)
+                      contact.params['partstat'] = vText('NEEDS-ACTION')
+                      contact.params['rsvp'] = vText(str(bool(_contact.send_email)).upper())
                   else:
                     contact = vCalAddress(u'mailto:%s' % "")
                     contact.params['cn'] = vText(_contact.reference_docname)
                   if _contact.participant_type:
                     if _contact.participant_type == "Chairperson":
-                      contact.params['ROLE'] = vText('CHAIR')
+                      contact.params['ROLE'] = vText('CHAIR') 
                     elif _contact.participant_type == "Required":
-                      contact.params['ROLE'] = vText('REQ-PARTICIPANT')
+                      contact.params['ROLE'] = vText('REQ-PARTICIPANT') 
                     elif _contact.participant_type == "Optional":
                       contact.params['ROLE'] = vText('OPT-PARTICIPANT')
                     elif _contact.participant_type == "Non Participant":
@@ -198,7 +205,7 @@ def sync_caldav_event_by_user(doc, method=None):
   else:
     if doc.event_uid:
       remove_caldav_event(doc)
-
+      
       doc.caldav_id_url = None
       doc.event_uid = None
       doc.event_stamp = None
@@ -315,7 +322,7 @@ def sync_outside_caldav():
                     new_event.save()
                     frappe.db.commit()
                     #print(new_event.as_dict())
-
+                    
 def prepare_fp_event(event, cal_event):
   # Prepare event for Frappe
   """
@@ -377,6 +384,9 @@ def prepare_fp_event(event, cal_event):
     event.event_category = "Other"
   # event_participants child_table
   if 'attendee' in cal_event:
+    contact_name = None
+    participant_type = None
+    send_email = False
     for attendee in cal_event.get('attendee', []):
       contact = attendee.replace("mailto:", "")
       contact_name = frappe.db.get_value("Contact", {"email_id": contact})
@@ -384,18 +394,38 @@ def prepare_fp_event(event, cal_event):
         isInvited = True
         if 'event_participants' in event.as_dict():
           for row in event.event_participants:
-            if contact_name in row:
+            if contact_name == row.reference_docname or contact == row.reference_docname:
               isInvited = False
         if isInvited:
+          if 'ROLE' in attendee.params:
+            role = attendee.params['role']
+            if role == 'REQ-PARTICIPANT':
+              participant_type = 'Required'
+            elif role == 'CHAIR':
+              participant_type = 'Chairperson'
+            elif role == 'OPT-PARTICIPANT':
+              participant_type = 'Optional'
+            elif role == 'NON-PARTICIPANT':
+              participant_type = 'Non Participant'
+          if 'CN' in attendee.params:
+            print(attendee.params['cn'])
+          if 'PARTSTAT' in attendee.params:
+            print(attendee.params['partstat'])
+          if 'RSVP' in attendee.params:
+            rsvp = attendee.params['rsvp']
+            if rsvp == 'TRUE':
+              send_email = True
+            else:
+              send_email = False
           event.append('event_participants', {
             'reference_doctype': 'Contact', 
-            'reference_docname': contact_name
+            'reference_docname': contact_name,
+            'participant_type': participant_type,
+            'send_email': send_email
           })
-  # For future development
+  # For future development  
   if 'rrule' in cal_event:
     event.repeat_this_event = 1
-  #if 'attendee' in cal_event:
 
-
-
+  #print(event.as_dict())
   return event
