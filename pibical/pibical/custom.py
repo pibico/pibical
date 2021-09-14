@@ -385,6 +385,9 @@ def prepare_fp_event(event, cal_event):
     event.event_category = "Other"
   # event_participants child_table
   if 'attendee' in cal_event:
+    contact_name = None
+    participant_type = None
+    send_email = False
     for attendee in cal_event.get('attendee', []):
       contact = attendee.replace("mailto:", "")
       contact_name = frappe.db.get_value("Contact", {"email_id": contact})
@@ -395,9 +398,31 @@ def prepare_fp_event(event, cal_event):
             if contact_name in row:
               isInvited = False
         if isInvited:
+          if 'ROLE' in attendee.params:
+            role = attendee.params['role']
+            if role == 'REQ-PARTICIPANT':
+              participant_type = 'Required'
+            elif role == 'CHAIR':
+              participant_type = 'Chairperson'
+            elif role == 'OPT-PARTICIPANT':
+              participant_type = 'Optional'
+            elif role == 'NON-PARTICIPANT':
+              participant_type = 'Non Participant'
+          if 'CN' in attendee.params:
+            print(attendee.params['cn'])
+          if 'PARTSTAT' in attendee.params:
+            print(attendee.params['partstat'])
+          if 'RSVP' in attendee.params:
+            rsvp = attendee.params['rsvp']
+            if rsvp == 'TRUE':
+              send_email = True
+            else:
+              send_email = False
           event.append('event_participants', {
             'reference_doctype': 'Contact', 
-            'reference_docname': contact_name
+            'reference_docname': contact_name,
+            'participant_type': participant_type,
+            'send_email': send_email
           })
   # For future development  
   if 'rrule' in cal_event:
