@@ -422,8 +422,8 @@ def prepare_fp_event(event, cal_event):
               send_email = True
             else:
               send_email = False
-            if send_mail:
-              event_participants['send_mail'] = send_mail    
+            if send_email:
+              event_participants['send_mail'] = send_email    
           
           event.append('event_participants', event_participants)
   # For future development  
