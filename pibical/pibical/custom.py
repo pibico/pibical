@@ -384,12 +384,10 @@ def prepare_fp_event(event, cal_event):
     event.event_category = "Other"
   # event_participants child_table
   if 'attendee' in cal_event:
-    contact_name = None
-    participant_type = None
-    send_email = False
     for attendee in cal_event.get('attendee', []):
       contact = attendee.replace("mailto:", "")
       contact_name = frappe.db.get_value("Contact", {"email_id": contact})
+      event_participants = {}
       if contact_name:
         isInvited = True
         if 'event_participants' in event.as_dict():
@@ -397,6 +395,8 @@ def prepare_fp_event(event, cal_event):
             if contact_name == row.reference_docname or contact == row.reference_docname:
               isInvited = False
         if isInvited:
+          event_participants['reference_doctype'] = 'Contact'
+          event_participants['reference_docname'] = contact_name
           if 'ROLE' in attendee.params:
             role = attendee.params['role']
             if role == 'REQ-PARTICIPANT':
@@ -407,25 +407,27 @@ def prepare_fp_event(event, cal_event):
               participant_type = 'Optional'
             elif role == 'NON-PARTICIPANT':
               participant_type = 'Non Participant'
+            if participant_type:
+              event_participants['participant_type'] = participant_type  
           if 'CN' in attendee.params:
             print(attendee.params['cn'])
           if 'PARTSTAT' in attendee.params:
-            print(attendee.params['partstat'])
+            partstat = attendee.params['partstat']
+            if partstat == 'ACCEPTED':
+              invitation_accepted = True
+              event_participants['invitation_accepted'] = invitation_accepted
           if 'RSVP' in attendee.params:
             rsvp = attendee.params['rsvp']
             if rsvp == 'TRUE':
               send_email = True
             else:
               send_email = False
-          event.append('event_participants', {
-            'reference_doctype': 'Contact', 
-            'reference_docname': contact_name,
-            'participant_type': participant_type,
-            'send_email': send_email
-          })
+            if send_mail:
+              event_participants['send_mail'] = send_mail    
+          
+          event.append('event_participants', event_participants)
   # For future development  
   if 'rrule' in cal_event:
     event.repeat_this_event = 1
-
   #print(event.as_dict())
   return event
