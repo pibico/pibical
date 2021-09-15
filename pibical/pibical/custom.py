@@ -386,14 +386,22 @@ def prepare_fp_event(event, cal_event):
   if 'attendee' in cal_event:
     for attendee in cal_event.get('attendee', []):
       contact = attendee.replace("mailto:", "")
+      # Search contacts in frappe and returns the name from its email_id
       contact_name = frappe.db.get_value("Contact", {"email_id": contact})
+      # dict for child table event_participants
       event_participants = {}
+      # if contact_name exists
       if contact_name:
+        # Consider all contacts initially existent in child table
         isInvited = True
+        # Check if child table is filled in
         if 'event_participants' in event.as_dict():
+          # Loop through child table to look for contacts and skip if existing
           for row in event.event_participants:
             if contact_name == row.reference_docname or contact == row.reference_docname:
               isInvited = False
+              
+        # If contact not included in child table, for include in table      
         if isInvited:
           event_participants['reference_doctype'] = 'Contact'
           event_participants['reference_docname'] = contact_name
@@ -422,8 +430,8 @@ def prepare_fp_event(event, cal_event):
               send_email = True
             else:
               send_email = False
-            if send_mail:
-              event_participants['send_mail'] = send_mail    
+            if send_email:
+              event_participants['send_email'] = send_email    
           
           event.append('event_participants', event_participants)
   # For future development  
