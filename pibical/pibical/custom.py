@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import frappe
 from frappe import msgprint, _
 import json
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 import sys, requests, hashlib
 from icalendar import Calendar, Event
@@ -114,12 +114,18 @@ def sync_caldav_event_by_user(doc, method=None):
             event.add('dtstamp', doc.event_stamp)
             # DTSTART from start
             dtstart = datetime.strptime(doc.starts_on, '%Y-%m-%d %H:%M:%S')
-            dtstart = datetime(dtstart.year, dtstart.month, dtstart.day, dtstart.hour, dtstart.minute, dtstart.second, tzinfo=madrid)
+            if doc.all_day:
+              dtstart = date(dtstart.year, dtstart.month, dtstart.day)
+            else:  
+              dtstart = datetime(dtstart.year, dtstart.month, dtstart.day, dtstart.hour, dtstart.minute, dtstart.second, tzinfo=madrid)
             event.add('dtstart', dtstart)
             # DTEND if end
             if doc.ends_on:
               dtend = datetime.strptime(doc.ends_on, '%Y-%m-%d %H:%M:%S')
-              dtend = datetime(dtend.year, dtend.month, dtend.day, dtend.hour, dtend.minute, dtend.second, tzinfo=madrid)
+              if doc.all_day:
+                dtend = date(dtend.year, dtend.month, dtend.day)
+              else:  
+                dtend = datetime(dtend.year, dtend.month, dtend.day, dtend.hour, dtend.minute, dtend.second, tzinfo=madrid)
               event.add('dtend', dtend)
             # DESCRIPTION if any
             if doc.description:
@@ -372,10 +378,18 @@ def prepare_fp_event(event, cal_event):
   else:
     event.subject = cal_event.decoded('summary').decode("utf-8")
   # starts_on
-  event.starts_on = cal_event.decoded('dtstart').astimezone().strftime("%Y-%m-%d %H:%M:%S")
+  if isinstance(cal_event.decoded('dtstart'), datetime):
+    event.all_day = False
+    event.starts_on = cal_event.decoded('dtstart').astimezone().strftime("%Y-%m-%d %H:%M:%S")
+  else:
+    event.all_day = True
+    event.starts_on = cal_event.decoded('dtstart').strftime("%Y-%m-%d")
   # ends_on
   if 'dtend' in cal_event:
-    event.ends_on = cal_event.decoded('dtend').astimezone().strftime("%Y-%m-%d %H:%M:%S")
+    if isinstance(cal_event.decoded('dtend'), datetime):
+      event.ends_on = cal_event.decoded('dtend').astimezone().strftime("%Y-%m-%d %H:%M:%S")
+    else:
+      event.ends_on = cal_event.decoded('dtend').strftime("%Y-%m-%d")
   # event_dtstamp
   event.event_stamp = cal_event.decoded('dtstamp').astimezone().strftime("%Y-%m-%d %H:%M:%S")
   # event_uid
