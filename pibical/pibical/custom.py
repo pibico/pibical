@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import frappe
 from frappe import msgprint, _
 import json
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 import sys, requests, hashlib
 from icalendar import Calendar, Event
@@ -114,12 +114,18 @@ def sync_caldav_event_by_user(doc, method=None):
             event.add('dtstamp', doc.event_stamp)
             # DTSTART from start
             dtstart = datetime.strptime(doc.starts_on, '%Y-%m-%d %H:%M:%S')
-            dtstart = datetime(dtstart.year, dtstart.month, dtstart.day, dtstart.hour, dtstart.minute, dtstart.second, tzinfo=madrid)
+            if doc.all_day:
+              dtstart = date(dtstart.year, dtstart.month, dtstart.day)
+            else:  
+              dtstart = datetime(dtstart.year, dtstart.month, dtstart.day, dtstart.hour, dtstart.minute, dtstart.second, tzinfo=madrid)
             event.add('dtstart', dtstart)
             # DTEND if end
             if doc.ends_on:
               dtend = datetime.strptime(doc.ends_on, '%Y-%m-%d %H:%M:%S')
-              dtend = datetime(dtend.year, dtend.month, dtend.day, dtend.hour, dtend.minute, dtend.second, tzinfo=madrid)
+              if doc.all_day:
+                dtend = date(dtend.year, dtend.month, dtend.day)
+              else:  
+                dtend = datetime(dtend.year, dtend.month, dtend.day, dtend.hour, dtend.minute, dtend.second, tzinfo=madrid)
               event.add('dtend', dtend)
             # DESCRIPTION if any
             if doc.description:
@@ -149,7 +155,14 @@ def sync_caldav_event_by_user(doc, method=None):
               if len(doc.event_participants) > 0:
                 for _contact in doc.event_participants:
                   if _contact.reference_doctype in ["Contact", "Customer", "Lead", "Supplier"]:
-                    email = frappe.db.get_value("Contact", _contact.reference_docname, "email_id")
+                    if _contact.reference_doctype == "Contact":
+                      email = frappe.db.get_value("Contact", _contact.reference_docname, "email_id")
+                    elif _contact.reference_doctype == "Customer":
+                      email = frappe.db.get_value("Customer", _contact.reference_docname, "email_id")
+                    elif _contact.reference_doctype == "Lead":
+                      email = frappe.db.get_value("Lead", _contact.reference_docname, "email_id")
+                    elif _contact.reference_doctype == "Supplier":
+                      email = frappe.db.get_value("Supplier", _contact.reference_docname, "email_id")
                     contact = vCalAddress(u'mailto:%s' % email)
                     contact.params['cn'] = vText(_contact.reference_docname)
                     contact.params['partstat'] = vText('NEEDS-ACTION')
@@ -365,10 +378,18 @@ def prepare_fp_event(event, cal_event):
   else:
     event.subject = cal_event.decoded('summary').decode("utf-8")
   # starts_on
-  event.starts_on = cal_event.decoded('dtstart').astimezone().strftime("%Y-%m-%d %H:%M:%S")
+  if isinstance(cal_event.decoded('dtstart'), datetime):
+    event.all_day = False
+    event.starts_on = cal_event.decoded('dtstart').astimezone().strftime("%Y-%m-%d %H:%M:%S")
+  else:
+    event.all_day = True
+    event.starts_on = cal_event.decoded('dtstart').strftime("%Y-%m-%d")
   # ends_on
   if 'dtend' in cal_event:
-    event.ends_on = cal_event.decoded('dtend').astimezone().strftime("%Y-%m-%d %H:%M:%S")
+    if isinstance(cal_event.decoded('dtend'), datetime):
+      event.ends_on = cal_event.decoded('dtend').astimezone().strftime("%Y-%m-%d %H:%M:%S")
+    else:
+      event.ends_on = cal_event.decoded('dtend').strftime("%Y-%m-%d")
   # event_dtstamp
   event.event_stamp = cal_event.decoded('dtstamp').astimezone().strftime("%Y-%m-%d %H:%M:%S")
   # event_uid
@@ -386,22 +407,14 @@ def prepare_fp_event(event, cal_event):
   if 'attendee' in cal_event:
     for attendee in cal_event.get('attendee', []):
       contact = attendee.replace("mailto:", "")
-      # Search contacts in frappe and returns the name from its email_id
       contact_name = frappe.db.get_value("Contact", {"email_id": contact})
-      # dict for child table event_participants
       event_participants = {}
-      # if contact_name exists
       if contact_name:
-        # Consider all contacts initially existent in child table
         isInvited = True
-        # Check if child table is filled in
         if 'event_participants' in event.as_dict():
-          # Loop through child table to look for contacts and skip if existing
           for row in event.event_participants:
             if contact_name == row.reference_docname or contact == row.reference_docname:
               isInvited = False
-              
-        # If contact not included in child table, for include in table      
         if isInvited:
           event_participants['reference_doctype'] = 'Contact'
           event_participants['reference_docname'] = contact_name
@@ -437,5 +450,6 @@ def prepare_fp_event(event, cal_event):
   # For future development  
   if 'rrule' in cal_event:
     event.repeat_this_event = 1
+         
   #print(event.as_dict())
   return event
