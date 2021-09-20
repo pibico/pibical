@@ -154,15 +154,13 @@ def sync_caldav_event_by_user(doc, method=None):
             if doc.event_participants:
               if len(doc.event_participants) > 0:
                 for _contact in doc.event_participants:
-                  if _contact.reference_doctype in ["Contact", "Customer", "Lead", "Supplier"]:
+                  if _contact.reference_doctype in ["Contact", "Customer", "Lead"]:
                     if _contact.reference_doctype == "Contact":
                       email = frappe.db.get_value("Contact", _contact.reference_docname, "email_id")
                     elif _contact.reference_doctype == "Customer":
                       email = frappe.db.get_value("Customer", _contact.reference_docname, "email_id")
                     elif _contact.reference_doctype == "Lead":
                       email = frappe.db.get_value("Lead", _contact.reference_docname, "email_id")
-                    elif _contact.reference_doctype == "Supplier":
-                      email = frappe.db.get_value("Supplier", _contact.reference_docname, "email_id")
                     contact = vCalAddress(u'mailto:%s' % email)
                     contact.params['cn'] = vText(_contact.reference_docname)
                     contact.params['partstat'] = vText('NEEDS-ACTION')
@@ -193,11 +191,51 @@ def sync_caldav_event_by_user(doc, method=None):
             if doc.repeat_this_event:
              if doc.repeat_on:
                if not doc.repeat_till:
-                 event.add('rrule', {'freq': [doc.repeat_on.lower()]})
+                 if doc.repeat_on.lower() == 'weekly':
+                   sday = []
+                   if doc.monday:
+                     sday.append('MO')
+                   if doc.tuesday:
+                     sday.append('TU')
+                   if doc.wednesday:
+                     sday.append('WE')
+                   if doc.thursday:
+                     sday.append('TH')
+                   if doc.friday:
+                     sday.append('FR')
+                   if doc.saturday:
+                     sday.append('SA')
+                   if doc.sunday:
+                     sday.append('SU')
+                   if len(sday) > 0:  
+                     event.add('rrule', {'freq': [doc.repeat_on.lower()], 'byday': sday})
+                   else:
+                     event.add('rrule', {'freq': [doc.repeat_on.lower()]})
+                 else:
+                   event.add('rrule', {'freq': [doc.repeat_on.lower()]})
                else:
                  dtuntil = datetime.strptime(doc.repeat_till, '%Y-%m-%d')
                  dtuntil = datetime(dtuntil.year, dtuntil.month, dtuntil.day, tzinfo=madrid)
-                 event.add('rrule', {'freq': [doc.repeat_on.lower()], 'until': [dtuntil]})
+                 if doc.repeat_on.lower() == 'weekly':
+                   sday = []
+                   if doc.monday:
+                     sday.append('MO')
+                   if doc.tuesday:
+                     sday.append('TU')
+                   if doc.wednesday:
+                     sday.append('WE')
+                   if doc.thursday:
+                     sday.append('TH')
+                   if doc.friday:
+                     sday.append('FR')
+                   if doc.saturday:
+                     sday.append('SA')
+                   if doc.sunday:
+                     sday.append('SU')
+                   if len(sday) > 0:  
+                     event.add('rrule', {'freq': [doc.repeat_on.lower()], 'byday': sday, 'until': [dtuntil]})
+                   else:
+                     event.add('rrule', {'freq': [doc.repeat_on.lower()], 'until': [dtuntil]})
             # Add event to iCalendar 
             cal.add_component(event)
             # Save/Update Frappe Event
