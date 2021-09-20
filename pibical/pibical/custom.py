@@ -487,7 +487,32 @@ def prepare_fp_event(event, cal_event):
           event.append('event_participants', event_participants)
   # For future development  
   if 'rrule' in cal_event:
+    """ {'FREQ': ['WEEKLY'], 'UNTIL': [datetime.datetime(2021, 10, 3, 0, 0)], 'BYDAY': ['TU', 'TH', 'SA']} """
     event.repeat_this_event = 1
-         
+    rule = cal_event.get('rrule')
+    if rule:
+      rrule = dict(rule)
+      if 'FREQ' in rrule:
+        frequency = rrule['FREQ'][0].lower().capitalize()
+        event.repeat_on = frequency
+        if frequency == "Weekly":
+          if 'BYDAY' in rrule:
+            if 'MO' in rrule['BYDAY']:
+              event.monday = True             
+            if 'TU' in rrule['BYDAY']:
+              event.tuesday = True
+            if 'WE' in rrule['BYDAY']:
+              event.wednesday = True
+            if 'TH' in rrule['BYDAY']:
+              event.thursday = True
+            if 'FR' in rrule['BYDAY']:
+              event.friday = True
+            if 'SA' in rrule['BYDAY']:
+              event.saturday = True
+            if 'SU' in rrule['BYDAY']:
+              event.sunday = True 
+      if 'UNTIL' in rrule:
+        event.repeat_till = rrule['UNTIL'][0].strftime("%Y-%m-%d")
+                                  
   #print(event.as_dict())
   return event
