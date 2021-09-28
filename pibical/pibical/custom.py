@@ -234,8 +234,8 @@ def sync_caldav_event_by_user(doc, method=None):
                      sday.append('SU')
                    if len(sday) > 0:  
                      event.add('rrule', {'freq': [doc.repeat_on.lower()], 'byday': sday, 'until': [dtuntil]})
-                   else:
-                     event.add('rrule', {'freq': [doc.repeat_on.lower()], 'until': [dtuntil]})
+                 else:
+                   event.add('rrule', {'freq': [doc.repeat_on.lower()], 'until': [dtuntil]})
             # Add event to iCalendar 
             cal.add_component(event)
             # Save/Update Frappe Event
