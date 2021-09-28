@@ -2,6 +2,19 @@
  {
   "docstatus": 0,
   "doctype": "Client Script",
+  "dt": "Item",
+  "enabled": 1,
+  "modified": "2021-09-28 18:47:38.867398",
+  "name": "Item-Form",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "frappe.ui.form.on(\"Item\", \"onload\", function(frm) {\n  frm.set_query(\"item_group\", function() {\n    return {\n            \"filters\": {\n                \"is_group\": \"0\",\n            }\n    };\n  });\n});",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
   "dt": "Event",
   "enabled": 1,
   "modified": "2021-09-12 20:34:27.011235",
