@@ -15,7 +15,7 @@ PibiCal has been tested on Frappe/ERPNext version-12 and version-13 as well join
 ## Installation
 From the frappe-bench folder, execute (change branch to the proper version of Frappe/ERPNext)
 ```
-$ bench get-app pibical https://github.com/pibico/pibical.git --branch version-12
+$ bench get-app pibical https://github.com/pibico/pibical.git --branch version-13
 $ bench install-app pibical
 ```
 If you are using a multi-tenant environment, use the following command
