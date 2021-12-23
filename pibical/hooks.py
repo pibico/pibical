@@ -140,4 +140,4 @@ scheduler_events = {
 # 	"Task": "pibical.task.get_dashboard_data"
 # }
 
-fixtures = ["Custom Field","Client Script","Translation"]
+fixtures = [{"doctype": "Custom Field", "filters": [ ["dt", "in", ("Event")] ]}, {"doctype": "Client Script", "filters": [ ["dt", "in", ("Event")] ]},"Translation"]
