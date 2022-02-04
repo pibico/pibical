@@ -4014,5 +4014,21 @@
   "parenttype": null,
   "source_text": "Is Rectificative",
   "translated_text": "Es Rectificativa"
+ },
+ {
+  "context": null,
+  "contributed": 0,
+  "contribution_docname": null,
+  "contribution_status": "",
+  "docstatus": 0,
+  "doctype": "Translation",
+  "language": "es",
+  "modified": "2022-01-06 13:48:26.295110",
+  "name": "0e5f670e0d",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "source_text": "Profit and Loss",
+  "translated_text": "P\u00e9rdidas y Ganancias"
  }
 ]
