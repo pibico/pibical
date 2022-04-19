@@ -102,7 +102,6 @@ scheduler_events = {
   }
 }
 
-
 # scheduler_events = {
 # 	"all": [
 # 		"pibical.tasks.all"

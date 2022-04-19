@@ -3,7 +3,7 @@
 # For license information, please see license.txt
 from __future__ import unicode_literals
 import frappe
-from frappe import msgprint, _
+from frappe import msgprint, _, throw, enqueue
 import json
 from datetime import date, datetime, timedelta
 
@@ -241,25 +241,40 @@ def sync_caldav_event_by_user(doc, method=None):
             # Save/Update Frappe Event
             c.save_event(cal.to_ical())
             # Get all events in matched calendar just to inform about existing or new event
-            all_events = c.events()
-            # Loop through events to check if current event exists
-            for url_event in all_events:
-              cal_url = str(url_event).replace("Event: https://", "https://" + caldav_username + ":" + caldav_token +"@")
-              req = requests.get(cal_url)
-              cal = Calendar.from_ical(req.text)
-              for evento in cal.walk('vevent'):
-                if uidstamp in str(evento.decoded('uid')):
-                  # print(evento.decoded('summary'), evento.decoded('attendee'), evento.decoded('dtstart'), evento.decoded('dtend'), evento.decoded('dtstamp'))  
-                  # Save event in iCalendar to caldav
-                  frappe.msgprint(_("Updated/Created Event in Calendar ") + str(c.name))    
-                  break
+            #all_events = c.events()
+            
+            #args = {
+            #    "all_events": all_events,
+            #    "caldav_username": caldav_username,
+            #    "caldav_token": caldav_token,
+            #    "uidstamp": uidstamp
+            #}
+            #enqueue(method=check_event_exists, queue='long', timeout=600, now=True, **args)
+            
   else:
     if doc.event_uid:
-      remove_caldav_event(doc)
-      
+      args = {
+        "doc": doc
+      }
+      #remove_caldav_event(doc)
+      enqueue(method=remove_caldav_event, queue='short', timeout=300, now=True, *args)
+
       doc.caldav_id_url = None
       doc.event_uid = None
       doc.event_stamp = None
+
+def check_event_exists(all_events, caldav_username, caldav_token, uidstamp):
+  # Loop through events to check if current event exists
+  for url_event in all_events:
+    cal_url = str(url_event).replace("Event: https://", "https://" + caldav_username + ":" + caldav_token + "@")
+    req = requests.get(cal_url)
+    cal = Calendar.from_ical(req.text)
+    for evento in cal.walk('vevent'):
+      if uidstamp in str(evento.decoded('uid')):
+        # print(evento.decoded('summary'), evento.decoded('attendee'), evento.decoded('dtstart'), evento.decoded('dtend'), evento.decoded('dtstamp'))  
+        # Save event in iCalendar to caldav
+        frappe.msgprint(_("Updated/Created Event un Calendar"))
+        return
 
 @frappe.whitelist()
 def remove_caldav_event(doc, method=None):

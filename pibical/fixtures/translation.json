@@ -311,13 +311,13 @@
   "docstatus": 0,
   "doctype": "Translation",
   "language": "es",
-  "modified": "2021-10-16 08:39:30.772635",
+  "modified": "2022-01-31 17:40:34.165373",
   "name": "e5380c1d24",
   "parent": null,
   "parentfield": null,
   "parenttype": null,
   "source_text": "Dashboard",
-  "translated_text": "Panel Control"
+  "translated_text": "Cuadro de Mando"
  },
  {
   "context": null,
@@ -3191,22 +3191,6 @@
   "docstatus": 0,
   "doctype": "Translation",
   "language": "es",
-  "modified": "2021-09-12 18:47:40.489481",
-  "name": "9643a6d144",
-  "parent": null,
-  "parentfield": null,
-  "parenttype": null,
-  "source_text": "Dashboard",
-  "translated_text": "Indicadores"
- },
- {
-  "context": null,
-  "contributed": 0,
-  "contribution_docname": null,
-  "contribution_status": "",
-  "docstatus": 0,
-  "doctype": "Translation",
-  "language": "es",
   "modified": "2021-09-12 18:48:39.459444",
   "name": "5d39729461",
   "parent": null,
@@ -4030,5 +4014,37 @@
   "parenttype": null,
   "source_text": "Profit and Loss",
   "translated_text": "P\u00e9rdidas y Ganancias"
+ },
+ {
+  "context": null,
+  "contributed": 0,
+  "contribution_docname": null,
+  "contribution_status": "",
+  "docstatus": 0,
+  "doctype": "Translation",
+  "language": "es",
+  "modified": "2022-01-31 17:40:19.778884",
+  "name": "393d49f4fb",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "source_text": "Card",
+  "translated_text": "Panel"
+ },
+ {
+  "context": null,
+  "contributed": 0,
+  "contribution_docname": null,
+  "contribution_status": "",
+  "docstatus": 0,
+  "doctype": "Translation",
+  "language": "es",
+  "modified": "2021-09-12 18:47:40.489481",
+  "name": "9643a6d144",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "source_text": "Dashboard",
+  "translated_text": "Indicadores"
  }
 ]
