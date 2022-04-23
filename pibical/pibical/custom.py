@@ -358,7 +358,7 @@ def sync_outside_caldav():
                   )
                   if fp_event:
                     # Check if dtstamp has changed meaning it has been updated on NextCloud   
-                    if fp_event[0].event_stamp.strftime("%Y-%m-%d %H:%M:%S") != evento.decoded('dtstamp').strftime("%Y-%m-%d %H:%M:%S"):
+                    if fp_event[0].event_stamp.strftime("%Y-%m-%d %H:%M:%S") != evento.decoded('dtstamp').astimezone().strftime("%Y-%m-%d %H:%M:%S"):
                       cal_event = frappe.get_doc("Event", fp_event[0].name)
                       # caldav_id_url
                       cal_event.caldav_id_url = str(c.url)
