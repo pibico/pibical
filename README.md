@@ -1093,14 +1093,7 @@ tail -f ~/frappe-bench/logs/web.log | grep -i caldav
 
 ### Getting Help
 
-1. **Check Error Log** first for recent errors
-2. **Search GitHub Issues**: https://github.com/pibico/pibical/issues
-3. **Create Issue** with:
-   - Frappe version
-   - PibiCal version/branch
-   - Error log entries
-   - Steps to reproduce
-4. **Email Support**: pibico.sl@gmail.com
+**Email Support**: pibico.sl@gmail.com
 
 ---
 
