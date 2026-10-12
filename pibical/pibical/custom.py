@@ -148,8 +148,8 @@ def get_calendar(nuser):
     caldav_token = get_decrypted_password('User', nuser, 'caldav_token', False)
     
     try:
-      # set connection to caldav calendar with user credentials
-      caldav_client = caldav.DAVClient(url=caldav_url, username=caldav_username, password=caldav_token)
+      # set connection to caldav calendar with user credentials (with timeout)
+      caldav_client = caldav.DAVClient(url=caldav_url, username=caldav_username, password=caldav_token, timeout=10)
       cal_principal = caldav_client.principal()
       # fetching calendars from server
       calendars = cal_principal.calendars()
@@ -233,8 +233,8 @@ def sync_caldav_event_by_user(doc, method=None):
       caldav_token = get_decrypted_password('User', frappe.session.user, 'caldav_token', False)
       
       try:
-        # Set connection to caldav calendar with CalDav user credentials
-        caldav_client = caldav.DAVClient(url=caldav_url, username=caldav_username, password=caldav_token)
+        # Set connection to caldav calendar with CalDav user credentials (with timeout)
+        caldav_client = caldav.DAVClient(url=caldav_url, username=caldav_username, password=caldav_token, timeout=10)
         cal_principal = caldav_client.principal()
         # Fetching calendars from server
         calendars = cal_principal.calendars()
@@ -453,8 +453,8 @@ def remove_caldav_event(doc, method=None):
       caldav_token = get_decrypted_password('User', frappe.session.user, 'caldav_token', False)
       
       try:
-        # Set connection to caldav calendar with CalDav user credentials
-        caldav_client = caldav.DAVClient(url=caldav_url, username=caldav_username, password=caldav_token)
+        # Set connection to caldav calendar with CalDav user credentials (with timeout)
+        caldav_client = caldav.DAVClient(url=caldav_url, username=caldav_username, password=caldav_token, timeout=10)
         cal_principal = caldav_client.principal()
         # Fetching calendars from server
         calendars = cal_principal.calendars()
@@ -576,14 +576,16 @@ def sync_outside_caldav():
         
         try:
           # Get CalDav URL, CalDav User and Token
+          if not caldav_user.caldav_url:
+            continue
           if caldav_user.caldav_url[-1] == "/":
             caldav_url = caldav_user.caldav_url + "users/" + caldav_user.caldav_username
           else:
             caldav_url = caldav_user.caldav_url + "/users/" + caldav_user.caldav_username
           caldav_username = caldav_user.caldav_username
           caldav_token = get_decrypted_password('User', caldav_user.name, 'caldav_token', False)
-          # Set connection to caldav calendar with CalDav user credentials
-          caldav_client = caldav.DAVClient(url=caldav_url, username=caldav_username, password=caldav_token)
+          # Set connection to caldav calendar with CalDav user credentials (with timeout)
+          caldav_client = caldav.DAVClient(url=caldav_url, username=caldav_username, password=caldav_token, timeout=15)
           cal_principal = caldav_client.principal()
           # Fetching calendars from server
           calendars = cal_principal.calendars()
