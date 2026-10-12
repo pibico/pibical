@@ -674,6 +674,8 @@ def sync_outside_caldav():
                           else:
                             # Create new event in Frappe
                             new_cal_event = frappe.new_doc("Event")
+                            # The scheduler runs as Administrator: the calendar owner owns the event
+                            new_cal_event.owner = caldav_user.name
                             new_cal_event.caldav_id_url = str(c.url)
                             new_event = prepare_fp_event(new_cal_event, evento, user_tz)
                             new_event.flags.ignore_caldav_sync = True
@@ -702,8 +704,10 @@ def prepare_fp_event(event, cal_event, user_tz=None):
   if not user_tz:
     user_tz = get_user_timezone()
     
-  # event_type.  ALWAYS PUBLIC
-  event.event_type = "Public"
+  # event_type: events imported from a personal calendar are Private;
+  # existing events keep the type set in Frappe
+  if event.is_new():
+    event.event_type = "Private"
   # sync_with_caldav. ALWAYS TRUE
   event.sync_with_caldav = 1
   # caldav_id_calendar - set to the same as caldav_id_url if not already set
